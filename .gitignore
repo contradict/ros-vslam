@@ -1,0 +1,6 @@
+*/bin/*
+*/lib/*
+*/build/*
+*/msg_gen/*
+*/cfg/*
+.*.sw?
