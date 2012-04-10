@@ -62,6 +62,7 @@ using namespace std;
 #include <sys/time.h>
 
 // elapsed time in microseconds
+/*
 static long long utime()
 {
   timeval tv;
@@ -71,6 +72,7 @@ static long long utime()
   ts += tv.tv_usec;
   return ts;
 }
+*/
 
 namespace sba
 {
@@ -998,8 +1000,8 @@ namespace sba
         // NOTE: shouldn't need to redo all calcs in setupSys if we 
         //   got here from a bad update
 
-        long long t0, t1, t2, t3;
-        t0 = utime();
+        //long long t0, t1, t2, t3;
+        //t0 = utime();
         if (useCSparse)
           setupSparseSys(lambda,iter,useCSparse); // set up sparse linear system
         else
