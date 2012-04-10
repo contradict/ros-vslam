@@ -57,6 +57,7 @@ using namespace std;
 //typedef Matrix<double,6,1> Vector6d;
 //typedef Vector6d::AlignedMapType AV6d;
 #define AVNd typename Matrix<double,N,1>::AlignedMapType
+#define cAVNd(x) typename Matrix<double,N,1>::ConstAlignedMapType(x)
 
 namespace sba
 {
@@ -149,15 +150,15 @@ namespace sba
       // loop over off-diag entries
       if (diag.size() > 0)
         for (int i=0; i<(int)diag.size(); i++)
-          AVNd(&vout(i*N)) = diag[i]*AVNd(&vin(i*N)); // only works with cols ordering
+          AVNd(&vout(i*N)) = diag[i]*cAVNd(&vin(i*N)); // only works with cols ordering
 
       for (int i=0; i<(int)vcind.size(); i++)
         {
           int ri = vrind[i];
           int ii = vcind[i];
           const Matrix<double,N,N> &M = vcols[i];
-          AVNd(&vout(ri*N)) += M*AVNd(&vin(ii*N));
-          AVNd(&vout(ii*N)) += M.transpose()*AVNd(&vin(ri*N));
+          AVNd(&vout(ri*N)) += M*cAVNd(&vin(ii*N));
+          AVNd(&vout(ii*N)) += M.transpose()*cAVNd(&vin(ri*N));
         }
     }
 
