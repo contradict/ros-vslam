@@ -103,10 +103,11 @@ namespace vslam
         double angledist = fq.angularDistance(fq.Identity());
         if(pose_estimator_->getMethod() == pe::PoseEstimator::Stereo)
         {
-            //if (dist < maxdist && inl > mininls)
-            // Even if it's closer than the max distance, let it in if there's a 
-            // small number of inliers because we're losing inliers.
-            if (((dist < mindist && angledist < minang) && (inl > mininls))) // check for angle as well
+            if( inl < mininls ) {
+                cout << "[Stereo VO] Skipping frame " << (mindist) << " " << (minang) << " " << (inl) << "/" << (mininls) << endl;
+                return false;
+            }
+            if ( (dist < mindist) && (angledist < minang))
             {
                 // not a keyframe, set up translated keypoints in ref frame
                 cout << "[Stereo VO] Skipping frame " << (mindist) << " " << (minang) << " " << (inl) << "/" << (mininls) << endl;
