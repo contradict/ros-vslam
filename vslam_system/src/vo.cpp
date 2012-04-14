@@ -126,7 +126,7 @@ namespace vslam
         }
     }
 
-    Matrix<double,3,4> f2w, f2w_frame0, f2w_frame1;
+    Matrix<double,3,4> f2w_frame0, f2w_frame1;
     if (!init)
     {
         // rotation
@@ -136,15 +136,16 @@ namespace vslam
         fq = fq*fq0;                  // RW rotation
 
         if (isnan(fq.x()) || isnan(fq.y()) || isnan(fq.z()) || isnan(fq.w()))
-          return false; // Not a keyframe, not a valid node.
-          
-        transformF2W(f2w,nd0.trans,fq0);
-        trans.head(3) = f2w*trans;
+            return false; // Not a keyframe, not a valid node.
+
+        transformF2W(f2w_frame0,nd0.trans,nd0.qrot);
+
+        // translation
+        trans.head(3) = f2w_frame0*trans;
         //      cout << endl << f2w << endl << endl;
         //      cout << trans.head(3).transpose() << endl << endl;
-        
-        transformF2W(f2w_frame0,nd0.trans,nd0.qrot);
-      }
+
+    }
 
     // Add node for the frame, setting it to fixed if we're iniitializing,
     // floating otherwise.
@@ -316,26 +317,37 @@ namespace vslam
         //trans(3) = 1.0;
       }
 
-    Matrix<double,3,4> f2w, f2w_frame0, f2w_frame1;
+    /*
+    std::cout << std::scientific << "transfer fq ( " <<
+        fq.w() << ", " << fq.x() << ", " << fq.y() << ", " << fq.z() <<
+      " )" << std::endl;
+    */
+    Matrix<double,3,4> f2w_frame0, f2w_frame1;
     if (!init)
       {
         // rotation
         Node &nd0 = esba.nodes.back(); 
         Quaterniond fq0;
         fq0 = nd0.qrot;
+       
+        /*
+        std::cout << std::scientific << "transfer fq0 ( " <<
+            fq0.w() << ", " << fq0.x() << ", " << fq0.y() << ", " << fq0.z() <<
+            " )" << std::endl;
+        */
         fq = fq0*fq;            // RW rotation
   
-        // translation
-        transformF2W(f2w,nd0.trans,fq0);
-        trans.head(3) = f2w*trans;
         
+        // translation
         transformF2W(f2w_frame0,nd0.trans,nd0.qrot);
+        trans.head(3) = f2w_frame0*trans;
         //      cout << endl << f2w << endl << endl;
         //      cout << trans.head(3).transpose() << endl << endl;
       }
 
     // Add node for the frame, setting it to fixed if we're iniitializing,
     // floating otherwise.
+
     esba.addNode(trans, fq, f1.cam, init);
 
     int ndi = esba.nodes.size()-1;   // index of this new node
