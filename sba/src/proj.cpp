@@ -204,7 +204,7 @@ namespace sba
     double py = pc(1);
     double pz = pc(2);
     double ipz2 = 1.0/(pz*pz);
-    if (isnan(ipz2) ) { printf("[SetJac] infinite jac\n");  *(int *)0x0 = 0; }
+    //if (isnan(ipz2) ) { printf("[SetJac] infinite jac\n");  *(int *)0x0 = 0; }
 
     double ipz2fx = ipz2*nd.Kcam(0,0); // Fx
     double ipz2fy = ipz2*nd.Kcam(1,1); // Fy
