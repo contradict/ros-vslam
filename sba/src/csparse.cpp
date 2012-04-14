@@ -75,6 +75,8 @@ namespace sba
   {
     A = NULL;
 #ifdef SBA_CHOLMOD
+    cholmod_start (&Common) ;    // start it up ???
+    Common.print = 0;
     chA = NULL;
 #endif
     useCholmod = false;
@@ -86,6 +88,9 @@ namespace sba
   CSparse::~CSparse()
   {
     if (A) cs_spfree(A);        // free any previous structure
+#ifdef SBA_CHOLMOD
+    cholmod_finish (&Common) ;   // finish it ???
+#endif
   }
 
 
@@ -149,13 +154,6 @@ namespace sba
   // this version sets upper triangular matrix,
   void CSparse::setupCSstructure(double diaginc, bool init)
   {
-#ifdef SBA_CHOLMOD
-    if (useCholmod) {
-      cholmod_start(&Common); // this is finished in doChol()
-      Common.print = 0;
-    }
-#endif
-
     // reserve space and set things up
     if (init || useCholmod)
       {
@@ -171,9 +169,6 @@ namespace sba
 #ifdef SBA_CHOLMOD
         if (useCholmod)
           {
-            //            cholmod_start(&Common); // this is finished in doChol()
-            //            if (chA) 
-            //              cholmod_free_sparse(&chA, &Common);
             chA = cholmod_allocate_sparse(csize,csize,nnz,true,true,1,CHOLMOD_REAL,&Common);
           }
         else
@@ -401,8 +396,9 @@ namespace sba
     A = NULL;
     AF = NULL;
 #ifdef SBA_CHOLMOD
+    cholmod_start (&Common) ;    // start it up ???
+    Common.print = 0;
     chA = NULL;
-    Common.print=0;
 #endif
     asize = 0;
     csize = 0;
@@ -414,6 +410,9 @@ namespace sba
   {
     if (A) cs_spfree(A);        // free any previous structure
     if (AF) cs_spfree(AF);      // free any previous structure
+#ifdef SBA_CHOLMOD
+    cholmod_finish (&Common) ;   // finish it ???
+#endif
   }
 
 
@@ -496,13 +495,6 @@ namespace sba
 
   void CSparse2d::setupCSstructure(double diaginc, bool init)
   {
-#ifdef SBA_CHOLMOD
-    if (useCholmod) {
-      cholmod_start(&Common); // this is finished in doChol()
-      Common.print = 0;
-    }
-#endif
-
     // reserve space and set things up
     if (init || useCholmod)
       {
@@ -519,9 +511,6 @@ namespace sba
 #ifdef SBA_CHOLMOD
         if (useCholmod)
           {
-            //            cholmod_start(&Common); // this is finished in doChol()
-            //            if (chA) 
-            //              cholmod_free_sparse(&chA, &Common);
             chA = cholmod_allocate_sparse(csize,csize,nnz,true,true,1,CHOLMOD_REAL,&Common);
           }
         else
@@ -667,7 +656,6 @@ namespace sba
         minusone [0] = -1 ;
         minusone [1] = 0 ;
 
-        //        cholmod_start (&Common) ;    // start it up ???
         cholmod_print_sparse (chA, (char *)"A", &Common) ; // print simple stats
         b.nrow = csize;
         b.ncol = 1;
@@ -707,7 +695,6 @@ namespace sba
         cholmod_free_factor (&L, &Common) ; // free matrices 
         cholmod_free_dense (&x, &Common) ;
         cholmod_free_sparse(&chA, &Common);
-        cholmod_finish (&Common) ;   // finish it ???
 
         return true;
       }
