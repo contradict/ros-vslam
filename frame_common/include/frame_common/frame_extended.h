@@ -128,7 +128,7 @@ namespace frame_common
           Quaterniond normalquat;
           Vector3d norm0(pt0.normal[0], pt0.normal[1], pt0.normal[2]), norm1(pt1.normal[0], pt1.normal[1], pt1.normal[2]);
           normalquat.setFromTwoVectors(norm0, norm1);
-          double angledist = normalquat.angularDistance(normalquat.Identity());
+          //double angledist = normalquat.angularDistance(normalquat.Identity());
           double dist = (Vector3d(pt0.x, pt0.y, pt0.z)-Vector3d(pt1.x, pt1.y, pt1.z)).norm();
           
           Vector4d p0_pt = Vector4d(pt0.x, pt0.y, pt0.z, 1.0);
