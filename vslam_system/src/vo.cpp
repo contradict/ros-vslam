@@ -288,9 +288,6 @@ namespace vslam
     f1.ipts.assign(f1.kpts.size(), -1);
     f1.pl_ipts.assign(f1.pl_pts.size(), -1);
 
-    // ADD THIS LINE SO THAT PL_PTS ARE CREATED CORRECTLY IN LARGE SBA:
-    f1.pl_ipts.assign(f1.pl_pts.size(), -1);
-
     // add a frame ??? already passed in correct frame...
     //    f1 = frames.back();         // most recent frame in VO
 
