@@ -1189,43 +1189,43 @@ void SysSBA::setupSys(double sLambda)
 
     // loop over tracks (step 4)
     for(size_t pi=0; pi<tracks.size(); pi++)
-      {
+    {
         ProjMap &prjs = tracks[pi].projections;
         if (prjs.size() < 1) continue; // this catches some problems with bad tracks
 
-	// set up vector storage of Jacobian products
-	if (prjs.size() > jps.size())
-	  jps.resize(prjs.size());
+        // set up vector storage of Jacobian products
+        if (prjs.size() > jps.size())
+            jps.resize(prjs.size());
 
-	// local storage
+        // local storage
         Matrix3d Hpp;
         Hpp.setZero();            // zero it out
         Vector3d bp;
         bp.setZero();
-      
+
         // "compute derivates" of step 4
         // assume error has already been calculated in the cost function
-	int ii=0;
+        int ii=0;
         for(ProjMap::iterator itr = prjs.begin(); itr != prjs.end(); itr++, ii++)
-          {
+        {
             Proj &prj = itr->second;
             if (!prj.isValid) continue;
             int ni = prj.ndi - nFixed;
             int ci = ni * 6;    // index of camera params (6DOF)
-                                             // NOTE: assumes fixed cams are at beginning
+            // NOTE: assumes fixed cams are at beginning
             prj.setJacobians(nodes[prj.ndi],tracks[pi].point,&jps[ii]); // calculate derivatives
             Hpp += prj.jp->Hpp; // add in JpT*Jp
-            bp  -= prj.jp->Bp; // subtract JcT*f from bp; compute transpose twice???
+            bp  -= prj.jp->Bp; // subtract JpT*f from bp; compute transpose twice???
 
             if (!nodes[prj.ndi].isFixed)  // if not a fixed camera, do more
-              {
+            {
                 dcnt(prj.ndi - nFixed)++;
                 // NOTE: A is symmetric, only need the upper/lower triangular part
                 //                jctjc.diagonal() *= lam;  // now done at end
                 csp.addDiagBlock(prj.jp->Hcc,ni);
                 csp.B.block<6,1>(ci,0) -= prj.jp->JcTE;
-              }
-          }
+            }
+        }
 
         // Augment Hpp, invert it and save Hpp' * bp
         // Hmm, shouldn't need this (augmented diagonal at end), 
@@ -1233,48 +1233,48 @@ void SysSBA::setupSys(double sLambda)
         Hpp.diagonal() *= lam;
         Matrix3d Hppi = Hpp.inverse(); // Which inverse should we use???? Note Hpp is symmetric; but this is not a bottleneck
         Vector3d &tp = tps[pi];
-        tp = Hppi * bp;      
+        tp = Hppi * bp;
 
         // "outer product of track" in Step 4
         for(ProjMap::iterator itr = prjs.begin(); itr != prjs.end(); itr++)
-          {
+        {
             Proj &prj = itr->second;
             if (!prj.isValid) continue;
             if (nodes[prj.ndi].isFixed) continue; // skip fixed cameras
             int ni = prj.ndi - nFixed;
             int ci = ni * 6;    // index of camera params (6DOF)
-                                // NOTE: assumes fixed cams are at beginning
+            // NOTE: assumes fixed cams are at beginning
             csp.B.block<6,1>(ci,0) -= prj.jp->Hpc.transpose() * tp; // Hpc * tp subtracted from B
             prj.Tpc = prj.jp->Hpc.transpose() * Hppi;
 
             // iterate over nodes left on the track, plus yourself
             if (sparseType != SBA_GRADIENT)
-              for(ProjMap::iterator itr2 = itr; itr2 != prjs.end(); itr2++)
+                for(ProjMap::iterator itr2 = itr; itr2 != prjs.end(); itr2++)
                 {
-                  Proj &prj2 = itr2->second;
-                  if (!prj2.isValid) continue;
-                  if (nodes[prj2.ndi].isFixed) continue; // skip fixed cameras
-                  int ni2 = prj2.ndi - nFixed; // NOTE: assumes fixed cams are at beginning
-                  if (useConnMat && connMat[prj.ndi][prj2.ndi]) // check connection matrix filter
+                    Proj &prj2 = itr2->second;
+                    if (!prj2.isValid) continue;
+                    if (nodes[prj2.ndi].isFixed) continue; // skip fixed cameras
+                    int ni2 = prj2.ndi - nFixed; // NOTE: assumes fixed cams are at beginning
+                    if (useConnMat && connMat[prj.ndi][prj2.ndi]) // check connection matrix filter
                     {
-                      nskip++;
-                      continue;
+                        nskip++;
+                        continue;
                     }
-                  Matrix<double,6,6> m = -prj.Tpc * prj2.jp->Hpc;
-                  if (ni == ni2)
-                    csp.addDiagBlock(m,ni);
-                  else
-                    csp.addOffdiagBlock(m,ni,ni2);
+                    Matrix<double,6,6> m = -prj.Tpc * prj2.jp->Hpc;
+                    if (ni == ni2)
+                        csp.addDiagBlock(m,ni);
+                    else
+                        csp.addOffdiagBlock(m,ni,ni2);
                 }
             else                // gradient calculation
-              {
+            {
                 Matrix<double,6,6> m = -prj.Tpc * prj.jp->Hpc;
                 csp.addDiagBlock(m,ni);
-              }
+            }
 
-          } // finish outer product
+        } // finish outer product
 
-      } // finish track
+    } // finish track
 
     //    cout << "[SetupSparseSys] Skipped conns: " << nskip << endl;
 
@@ -1311,279 +1311,279 @@ void SysSBA::setupSys(double sLambda)
   /// <initTol> is the initial tolerance for CG 
   int SysSBA::doSBA(int niter, double sLambda, int useCSparse, double initTol, int maxCGiter)
   {
-    // set aux buffer
-    oldpoints.clear();
-    oldpoints.resize(tracks.size());
-    
+      // set aux buffer
+      oldpoints.clear();
+      oldpoints.resize(tracks.size());
 
-    // storage
-    int npts = tracks.size();
-    int ncams = nodes.size();
-    tps.resize(npts);
 
-    // set number of projections
-    int nprjs = 0;
-    for(size_t i=0; i<tracks.size(); i++)
-    {
-      oldpoints[i] = tracks[i].point;
-      nprjs += tracks[i].projections.size();
-    }
-    
-    if (nprjs == 0 || npts == 0 || ncams == 0)
-    {
-      return -1;
-    }
+      // storage
+      int npts = tracks.size();
+      int ncams = nodes.size();
+      tps.resize(npts);
 
-    // initialize vars
-    if (sLambda > 0.0)          // do we initialize lambda?
-      lambda = sLambda;
-
-    // check for fixed frames
-    if (nFixed <= 0)
+      // set number of projections
+      int nprjs = 0;
+      for(size_t i=0; i<tracks.size(); i++)
       {
-        cout << "[doSBA] No fixed frames" << endl;
-        return 0;
-      }
-    for (int i=0; i<ncams; i++)
-      {
-        Node &nd = nodes[i];
-        if (i >= nFixed)
-          nd.isFixed = false;
-        else 
-          nd.isFixed = true;
-        nd.setTransform(); // set up projection matrix for cost calculation
-        nd.setProjection();
-        nd.setDr(useLocalAngles);
+          oldpoints[i] = tracks[i].point;
+          nprjs += tracks[i].projections.size();
       }
 
-    // initialize vars
-    double laminc = 2.0;        // how much to increment lambda if we fail
-    double lamdec = 0.5;        // how much to decrement lambda if we succeed
-    int iter = 0;               // iterations
-    sqMinDelta = 1e-8 * 1e-8;
-    updateNormals();
-    double cost = calcCost();
-
-    if (verbose > 0)
+      if (nprjs == 0 || npts == 0 || ncams == 0)
       {
-	      cout << iter << " Initial squared cost: " << cost << " which is " 
-	           << sqrt(cost/nprjs) << " rms pixel error and " 
-	           << calcAvgError() << " average reproj error; " 
-	           << numBadPoints() << " bad points" << endl;
+          return -1;
       }
 
-    for (; iter<niter; iter++)  // loop at most <niter> times
+      // initialize vars
+      if (sLambda > 0.0)          // do we initialize lambda?
+          lambda = sLambda;
+
+      // check for fixed frames
+      if (nFixed <= 0)
       {
-        // set up and solve linear system
-        // NOTE: shouldn't need to redo all calcs in setupSys if we 
-        //   got here from a bad update
+          cout << "[doSBA] No fixed frames" << endl;
+          return 0;
+      }
+      for (int i=0; i<ncams; i++)
+      {
+          Node &nd = nodes[i];
+          if (i >= nFixed)
+              nd.isFixed = false;
+          else 
+              nd.isFixed = true;
+          nd.setTransform(); // set up projection matrix for cost calculation
+          nd.setProjection();
+          nd.setDr(useLocalAngles);
+      }
 
-        // If we have point-plane matches, should update normals here.
-        updateNormals();
-        
-        t0 = utime();
-        if (useCSparse)
-          setupSparseSys(lambda,iter,useCSparse); // sparse version
-        else
-          setupSys(lambda);     // set up linear system
+      // initialize vars
+      double laminc = 2.0;        // how much to increment lambda if we fail
+      double lamdec = 0.5;        // how much to decrement lambda if we succeed
+      int iter = 0;               // iterations
+      sqMinDelta = 1e-8 * 1e-8;
+      updateNormals();
+      double cost = calcCost();
 
-        //        if (iter == 0)
-        //          cout << endl << A << endl << endl;
-        //        cout << "[SBA] Solving...";
+      if (verbose > 0)
+      {
+          cout << iter << " Initial squared cost: " << cost << " which is " 
+              << sqrt(cost/nprjs) << " rms pixel error and " 
+              << calcAvgError() << " average reproj error; " 
+              << numBadPoints() << " bad points" << endl;
+      }
+
+      for (; iter<niter; iter++)  // loop at most <niter> times
+      {
+          // set up and solve linear system
+          // NOTE: shouldn't need to redo all calcs in setupSys if we 
+          //   got here from a bad update
+
+          // If we have point-plane matches, should update normals here.
+          updateNormals();
+
+          t0 = utime();
+          if (useCSparse)
+              setupSparseSys(lambda,iter,useCSparse); // sparse version
+          else
+              setupSys(lambda);     // set up linear system
+
+          //        if (iter == 0)
+          //          cout << endl << A << endl << endl;
+          //        cout << "[SBA] Solving...";
 
 #if 0
-        int xs = B.size();
-        char fn[2048];
-        sprintf(fn,"A%d.txt",xs);
-        printf("Writing file %s\n",fn);
-        FILE *fd = fopen(fn,"w");
-        fprintf(fd,"%d %d\n",xs,xs);
-        for (int ii=0; ii<xs; ii++)
-          for (int jj=0; jj<xs; jj++)
-            fprintf(fd,"%.16g\n",A(ii,jj));
-        fclose(fd);
+          int xs = B.size();
+          char fn[2048];
+          sprintf(fn,"A%d.txt",xs);
+          printf("Writing file %s\n",fn);
+          FILE *fd = fopen(fn,"w");
+          fprintf(fd,"%d %d\n",xs,xs);
+          for (int ii=0; ii<xs; ii++)
+              for (int jj=0; jj<xs; jj++)
+                  fprintf(fd,"%.16g\n",A(ii,jj));
+          fclose(fd);
 
-        sprintf(fn,"B%d.txt",xs);
-        fd = fopen(fn,"w");
-        fprintf(fd,"%d\n",xs);
-        for (int ii=0; ii<xs; ii++)
-          fprintf(fd,"%.16g\n",B(ii));
-        fclose(fd);
+          sprintf(fn,"B%d.txt",xs);
+          fd = fopen(fn,"w");
+          fprintf(fd,"%d\n",xs);
+          for (int ii=0; ii<xs; ii++)
+              fprintf(fd,"%.16g\n",B(ii));
+          fclose(fd);
 #endif
 
-        t1 = utime();
-	
-	// use appropriate linear solver
-	if (useCSparse == SBA_BLOCK_JACOBIAN_PCG)
-	  {
-            if (csp.B.rows() != 0)
-	      {
-		int iters = csp.doBPCG(maxCGiter,initTol,iter);
-		cout << "[Block PCG] " << iters << " iterations" << endl;
-	      }
-	  }
-        else if (useCSparse > 0)
+          t1 = utime();
+
+          // use appropriate linear solver
+          if (useCSparse == SBA_BLOCK_JACOBIAN_PCG)
           {
-            if (csp.B.rows() != 0)
-	      {
-		bool ok = csp.doChol();
-		if (!ok)
-		  cout << "[DoSBA] Sparse Cholesky failed!" << endl;
-	      }
+              if (csp.B.rows() != 0)
+              {
+                  int iters = csp.doBPCG(maxCGiter,initTol,iter);
+                  cout << "[Block PCG] " << iters << " iterations" << endl;
+              }
           }
-        else
+          else if (useCSparse > 0)
+          {
+              if (csp.B.rows() != 0)
+              {
+                  bool ok = csp.doChol();
+                  if (!ok)
+                      cout << "[DoSBA] Sparse Cholesky failed!" << endl;
+              }
+          }
+          else
           {
 #if 1
-            A.llt().solveInPlace(B); // Cholesky decomposition and solution
+              A.llt().solveInPlace(B); // Cholesky decomposition and solution
 #else
-            printf("\nDoing dpotrf/dpotrs\n");
-            double *a = A.data();
-            int info, m = B.size();
-            double *x = B.data();
-            int nrhs = 1;
-            F77_FUNC(dpotrf)("U", (int *)&m, a, (int *)&m, (int *)&info);
-            F77_FUNC(dpotrs)("U", (int *)&m, (int *)&nrhs, a, (int *)&m, x, (int *)&m, &info);
+              printf("\nDoing dpotrf/dpotrs\n");
+              double *a = A.data();
+              int info, m = B.size();
+              double *x = B.data();
+              int nrhs = 1;
+              F77_FUNC(dpotrf)("U", (int *)&m, a, (int *)&m, (int *)&info);
+              F77_FUNC(dpotrs)("U", (int *)&m, (int *)&nrhs, a, (int *)&m, x, (int *)&m, &info);
 #endif
           }
-        t2 = utime();
-        //        printf("Matrix size: %d  Time: %d\n", B.size(), t2-t1);
+          t2 = utime();
+          //        printf("Matrix size: %d  Time: %d\n", B.size(), t2-t1);
 
-        //        cout << "solved" << endl;
+          //        cout << "solved" << endl;
 
-        // get correct result vector
-        VectorXd &BB = useCSparse ? csp.B : B;
+          // get correct result vector
+          VectorXd &BB = useCSparse ? csp.B : B;
 
-        // check for convergence
-        // this is a pretty crummy convergence measure...
-        double sqDiff = BB.squaredNorm();
-        if (sqDiff < sqMinDelta) // converged, done...
+          // check for convergence
+          // this is a pretty crummy convergence measure...
+          double sqDiff = BB.squaredNorm();
+          if (sqDiff < sqMinDelta) // converged, done...
           {
-	          if (verbose > 0)
-	            cout << "Converged with delta: " << sqrt(sqDiff) << endl;
-                  break;
+              if (verbose > 0)
+                  cout << "Converged with delta: " << sqrt(sqDiff) << endl;
+              break;
           }
 
-        // update the cameras
-        int ci = 0;
-        for(vector<Node, Eigen::aligned_allocator<Node> >::iterator itr = nodes.begin(); itr != nodes.end(); itr++)
+          // update the cameras
+          int ci = 0;
+          for(vector<Node, Eigen::aligned_allocator<Node> >::iterator itr = nodes.begin(); itr != nodes.end(); itr++)
           {
-            Node &nd = *itr;
-            if (nd.isFixed) continue; // not to be updated
-            nd.oldtrans = nd.trans; // save in case we don't improve the cost
-            nd.oldqrot = nd.qrot;
-            nd.trans.head<3>() += BB.segment<3>(ci);
+              Node &nd = *itr;
+              if (nd.isFixed) continue; // not to be updated
+              nd.oldtrans = nd.trans; // save in case we don't improve the cost
+              nd.oldqrot = nd.qrot;
+              nd.trans.head<3>() += BB.segment<3>(ci);
 
-            if (useLocalAngles)
+              if (useLocalAngles)
               {
-                Quaternion<double> qr;
-                qr.vec() = BB.segment<3>(ci+3); 
-                //                double sn = qr.vec().squaredNorm();
-                //                if (sn > 0.01)  // usually indicates something has gone wrong
-                //                  qr.vec() = qr.vec() / (sqrt(sn) * 10.0);
-                qr.w() = sqrt(1.0 - qr.vec().squaredNorm());
-                qr = nd.qrot*qr; // post-multiply, because we pre-multiply the transpose for Jacobian
-                qr.normalize();
-                nd.qrot = qr;
+                  Quaternion<double> qr;
+                  qr.vec() = BB.segment<3>(ci+3); 
+                  //                double sn = qr.vec().squaredNorm();
+                  //                if (sn > 0.01)  // usually indicates something has gone wrong
+                  //                  qr.vec() = qr.vec() / (sqrt(sn) * 10.0);
+                  qr.w() = sqrt(1.0 - qr.vec().squaredNorm());
+                  qr = nd.qrot*qr; // post-multiply, because we pre-multiply the transpose for Jacobian
+                  qr.normalize();
+                  nd.qrot = qr;
               }
-            else
+              else
               {
-                nd.qrot.coeffs().head<3>() += BB.segment<3>(ci+3); 
-                nd.normRot();
+                  nd.qrot.coeffs().head<3>() += BB.segment<3>(ci+3); 
+                  nd.normRot();
               }
 
-            nd.setTransform();  // set up projection matrix for cost calculation
-            nd.setProjection();
-            nd.setDr(useLocalAngles); // set rotational derivatives
-            ci += 6;
+              nd.setTransform();  // set up projection matrix for cost calculation
+              nd.setProjection();
+              nd.setDr(useLocalAngles); // set rotational derivatives
+              ci += 6;
           }
 
-        // update the points (step 7)
-        // loop over tracks
-        int pi = 0;             // point index
-        for(vector<Track, Eigen::aligned_allocator<Track> >::iterator itr = tracks.begin();
-            itr != tracks.end(); itr++, pi++)
+          // update the points (step 7)
+          // loop over tracks
+          int pi = 0;             // point index
+          for(vector<Track, Eigen::aligned_allocator<Track> >::iterator itr = tracks.begin();
+                  itr != tracks.end(); itr++, pi++)
           {
-            ProjMap &prjs = itr->projections;
-            if (prjs.size() < 1) continue;
-            Vector3d tp = tps[pi]; // copy to preserve the original
-            // loop over cameras in each track
-            for(ProjMap::iterator pitr = prjs.begin(); pitr != prjs.end(); pitr++)
+              ProjMap &prjs = itr->projections;
+              if (prjs.size() < 1) continue;
+              Vector3d tp = tps[pi]; // copy to preserve the original
+              // loop over cameras in each track
+              for(ProjMap::iterator pitr = prjs.begin(); pitr != prjs.end(); pitr++)
               {
-                Proj &prj = pitr->second;
-                if (!prj.isValid) continue;
-                if (nodes[prj.ndi].isFixed) continue; // only update with non-fixed cameras
-                int ci = (prj.ndi - nFixed) * 6; // index of camera params (6DOF)
-                                                // NOTE: assumes fixed cams are at beginning
-                tp -= prj.Tpc.transpose() * BB.segment<6>(ci);
+                  Proj &prj = pitr->second;
+                  if (!prj.isValid) continue;
+                  if (nodes[prj.ndi].isFixed) continue; // only update with non-fixed cameras
+                  int ci = (prj.ndi - nFixed) * 6; // index of camera params (6DOF)
+                  // NOTE: assumes fixed cams are at beginning
+                  tp -= prj.Tpc.transpose() * BB.segment<6>(ci);
               }  
-            // update point
-            oldpoints[pi] = tracks[pi].point; // save for backing out
-            tracks[pi].point.head(3) += tp;
+              // update point
+              oldpoints[pi] = tracks[pi].point; // save for backing out
+              tracks[pi].point.head(3) += tp;
           }
 
-        t3 = utime();
+          t3 = utime();
 
-        // new cost
-        updateNormals();
-        double newcost = calcCost();
+          // new cost
+          updateNormals();
+          double newcost = calcCost();
 
-        // average reprojection error (for Lourakis test)
-        // write some stats
-	      if (verbose > 0)
-	        cout << iter << " Updated squared cost: " << newcost << " which is " 
-	             << sqrt(newcost/(double)nprjs) << " rms pixel error and " 
-	             << calcAvgError() << " average reproj error; " 
-	             << numBadPoints() << " bad points" << endl;        
+          // average reprojection error (for Lourakis test)
+          // write some stats
+          if (verbose > 0)
+              cout << iter << " Updated squared cost: " << newcost << " which is " 
+                  << sqrt(newcost/(double)nprjs) << " rms pixel error and " 
+                  << calcAvgError() << " average reproj error; " 
+                  << numBadPoints() << " bad points" << endl;        
 
 
-        // check if we did good
-        if (newcost < cost) // && iter != 0) // NOTE: iter==0 case is for checking
+          // check if we did good
+          if (newcost < cost) // && iter != 0) // NOTE: iter==0 case is for checking
           {
-            cost = newcost;
-            lambda *= lamdec;   // decrease lambda
-            //      laminc = 2.0;       // reset bad lambda factor; not sure if this is a good idea...
+              cost = newcost;
+              lambda *= lamdec;   // decrease lambda
+              //      laminc = 2.0;       // reset bad lambda factor; not sure if this is a good idea...
           }
-        else
+          else
           {
-            lambda *= laminc;   // increase lambda
-            laminc *= 2.0;      // increase the increment
-            // reset points
-            for(int i=0; i < (int)tracks.size(); i++)
-            {
-              tracks[i].point = oldpoints[i];
-            }
-            // reset cams
-            for(int i=0; i < (int)nodes.size(); i++)
+              lambda *= laminc;   // increase lambda
+              laminc *= 2.0;      // increase the increment
+              // reset points
+              for(int i=0; i < (int)tracks.size(); i++)
               {
-                Node &nd = nodes[i];
-                if (nd.isFixed) continue; // not to be updated
-                nd.trans = nd.oldtrans;
-                nd.qrot = nd.oldqrot;
-                nd.setTransform(); // set up projection matrix for cost calculation
-                nd.setProjection();
-                nd.setDr(useLocalAngles);
+                  tracks[i].point = oldpoints[i];
               }
-              
-            updateNormals();
-            cost = calcCost();  // need to reset errors
-	          if (verbose > 0)
-	            cout << iter << " Downdated cost: " << cost << endl;
-                  // NOTE: shouldn't need to redo all calcs in setupSys
+              // reset cams
+              for(int i=0; i < (int)nodes.size(); i++)
+              {
+                  Node &nd = nodes[i];
+                  if (nd.isFixed) continue; // not to be updated
+                  nd.trans = nd.oldtrans;
+                  nd.qrot = nd.oldqrot;
+                  nd.setTransform(); // set up projection matrix for cost calculation
+                  nd.setProjection();
+                  nd.setDr(useLocalAngles);
+              }
+
+              updateNormals();
+              cost = calcCost();  // need to reset errors
+              if (verbose > 0)
+                  cout << iter << " Downdated cost: " << cost << endl;
+              // NOTE: shouldn't need to redo all calcs in setupSys
           }
 
-        t4 = utime();
-        if (iter == 0 && verbose > 0)
-          printf("\n[SBA] Cost: %0.2f ms  Setup: %0.2f ms  Solve: %0.2f ms  Update: %0.2f ms  Total: %0.2f ms\n\n",
-                 0.001*(double)(t4-t3),
-                 0.001*(double)(t1-t0),
-                 0.001*(double)(t2-t1),
-                 0.001*(double)(t3-t2),
-                 0.001*(double)(t4-t0));
+          t4 = utime();
+          if (iter == 0 && verbose > 0)
+              printf("\n[SBA] Cost: %0.2f ms  Setup: %0.2f ms  Solve: %0.2f ms  Update: %0.2f ms  Total: %0.2f ms\n\n",
+                      0.001*(double)(t4-t3),
+                      0.001*(double)(t1-t0),
+                      0.001*(double)(t2-t1),
+                      0.001*(double)(t3-t2),
+                      0.001*(double)(t4-t0));
 
       }
 
-    // return number of iterations performed
-    return iter;
+      // return number of iterations performed
+      return iter;
   }
 
 

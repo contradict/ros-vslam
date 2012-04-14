@@ -89,7 +89,7 @@ namespace vslam
         fq.coeffs() = Vector4d(0,0,0,1);
       }
     else                        // else find pose relative to previous frame
-      {
+    {
         // check for initial pose estimate from last matched frame
         Frame &refFrame = frames.back();
 
@@ -103,39 +103,38 @@ namespace vslam
         double angledist = fq.angularDistance(fq.Identity());
         if(pose_estimator_->getMethod() == pe::PoseEstimator::Stereo)
         {
-          //if (dist < maxdist && inl > mininls)
-          // Even if it's closer than the max distance, let it in if there's a 
-          // small number of inliers because we're losing inliers.
-          if (((dist < mindist && angledist < minang) && (inl > mininls))) // check for angle as well
-          {
-            // not a keyframe, set up translated keypoints in ref frame
-            cout << "[Stereo VO] Skipping frame " << (mindist) << " " << (minang) << " " << (inl) << "/" << (mininls) << endl;
-            refFrame.setTKpts(trans,fq);
-            return false;
-          }
+            //if (dist < maxdist && inl > mininls)
+            // Even if it's closer than the max distance, let it in if there's a 
+            // small number of inliers because we're losing inliers.
+            if (((dist < mindist && angledist < minang) && (inl > mininls))) // check for angle as well
+            {
+                // not a keyframe, set up translated keypoints in ref frame
+                cout << "[Stereo VO] Skipping frame " << (mindist) << " " << (minang) << " " << (inl) << "/" << (mininls) << endl;
+                refFrame.setTKpts(trans,fq);
+                return false;
+            }
         }
         else
         {
-          if(inl < mininls) return false;
-          if((pose_estimator_->getMethod() == pe::PoseEstimator::PnP && dist < mindist) && inl > mininls)
-          {
-            cout << "dist = " << dist << " maxdist = " << mindist << " inl = " << inl
-                << " mininls = " << mininls << endl;
-            return false;       // no keyframe
-          }
+            if(inl < mininls) return false;
+            if((pose_estimator_->getMethod() == pe::PoseEstimator::PnP && dist < mindist) && inl > mininls)
+            {
+                cout << "dist = " << dist << " maxdist = " << mindist << " inl = " << inl
+                    << " mininls = " << mininls << endl;
+                return false;       // no keyframe
+            }
         }
-      }
+    }
 
     Matrix<double,3,4> f2w, f2w_frame0, f2w_frame1;
     if (!init)
-      {
+    {
         // rotation
         Node &nd0 = sba.nodes.back(); // last node
         Quaterniond fq0;
         fq0 = nd0.qrot;
         fq = fq*fq0;                  // RW rotation
-  
-        // translation
+
         if (isnan(fq.x()) || isnan(fq.y()) || isnan(fq.z()) || isnan(fq.w()))
           return false; // Not a keyframe, not a valid node.
           
@@ -184,9 +183,10 @@ namespace vslam
     else
       sba.nFixed = wfixed - (wsize - nframes);
 
-    cout << "[Stereo VO] Inliers: " << inl << "  Nodes: " << sba.nodes.size() << "   Points: " << sba.tracks.size() << endl;
+    cout << "[Stereo VO] Inliers: " << inl << "  Nodes: " << sba.nodes.size() <<
+        "   Points: " << sba.tracks.size() << endl;
     sba.verbose = 0;
-    sba.doSBA(4,1.0e-5,0);          // dense version
+    sba.doSBA(4,1.0e-5, SBA_DENSE_CHOLESKY);          // dense version
 
     // Do pointcloud matching and add the projections to the system.
     // Rot,trans is wrong, should be from updated SBA values
@@ -407,89 +407,89 @@ namespace vslam
                       SysSBA &sba, const std::vector<cv::DMatch> &inliers,
                       const Matrix<double,3,4>& f2w, int ndi0, int ndi1, std::vector<int>* ipts)
   {
-    // set up array to kill duplicate matches
-    vector<bool> matched0(f0.ipts.size(),0);
-    vector<bool> matched1(f1.ipts.size(),0);
-    
-    // Whether the frame we are adding is stereo or not.
-    // Not sure this would do the right thing in the case of stereo-mono matches.
-    bool stereo = f1.isStereo;
+      // set up array to kill duplicate matches
+      vector<bool> matched0(f0.ipts.size(),0);
+      vector<bool> matched1(f1.ipts.size(),0);
 
-    // add points and projections
-    for (int i=0; i<(int)inliers.size(); i++)
+      // Whether the frame we are adding is stereo or not.
+      // Not sure this would do the right thing in the case of stereo-mono matches.
+      bool stereo = f1.isStereo;
+
+      // add points and projections
+      for (int i=0; i<(int)inliers.size(); i++)
       {
-        int i0 = inliers[i].queryIdx;
-        int i1 = inliers[i].trainIdx;
+          int i0 = inliers[i].queryIdx;
+          int i1 = inliers[i].trainIdx;
 
-        if (matched0[i0]) continue;
-        if (matched1[i1]) continue;
+          if (matched0[i0]) continue;
+          if (matched1[i1]) continue;
 
-        if (f0.goodPts[i0] == 0) continue;
+          if (f0.goodPts[i0] == 0) continue;
 
-        matched0[i0] = true;
-        matched1[i1] = true;
+          matched0[i0] = true;
+          matched1[i1] = true;
 
-        int pti;
+          int pti;
 
-        if (f0.ipts[i0] < 0 && f1.ipts[i1] < 0)    // new point
+          if (f0.ipts[i0] < 0 && f1.ipts[i1] < 0)    // new point
           {
-            pti = sba.tracks.size();
-            f0.ipts[i0] = pti;
-            f1.ipts[i1] = pti;
+              pti = sba.tracks.size();
+              f0.ipts[i0] = pti;
+              f1.ipts[i1] = pti;
 
-            Vector4d pt;
-            pt.head(3) = f2w*f0.pts[i0]; // transform to RW coords
-            pt(3) = 1.0;
-            sba.addPoint(pt);
-            if (ipts)
-              ipts->push_back(-1);  // external point index
+              Vector4d pt;
+              pt.head(3) = f2w*f0.pts[i0]; // transform to RW coords
+              pt(3) = 1.0;
+              sba.addPoint(pt);
+              if (ipts)
+                  ipts->push_back(-1);  // external point index
 
-            Vector3d ipt = getProjection(f0, i0);
-            sba.addProj(ndi0, pti, ipt, stereo);
+              Vector3d ipt = getProjection(f0, i0);
+              sba.addProj(ndi0, pti, ipt, stereo);
 
-            // projected point, ul,vl,ur
-            ipt = getProjection(f1, i1);
-            sba.addProj(ndi1, pti, ipt, stereo);
+              // projected point, ul,vl,ur
+              ipt = getProjection(f1, i1);
+              sba.addProj(ndi1, pti, ipt, stereo);
           }
 
-        else if (f0.ipts[i0] >= 0 && f1.ipts[i1] >= 0) // merge two tracks
+          else if (f0.ipts[i0] >= 0 && f1.ipts[i1] >= 0) // merge two tracks
           {
-            if (f0.ipts[i0] != f1.ipts[i1]) // different tracks
+              if (f0.ipts[i0] != f1.ipts[i1]) // different tracks
               {
-                int tri = sba.mergeTracksSt(f0.ipts[i0],f1.ipts[i1]);
-                if (tri >= 0)   // successful merge
+                  int tri = sba.mergeTracksSt(f0.ipts[i0],f1.ipts[i1]);
+                  if (tri >= 0)   // successful merge
                   {
-                    // update the ipts in frames that connect to this track
-                    ProjMap &prjs = sba.tracks[tri].projections;
-                    for(ProjMap::iterator itr = prjs.begin(); itr != prjs.end(); itr++)
+                      // update the ipts in frames that connect to this track
+                      ProjMap &prjs = sba.tracks[tri].projections;
+                      for(ProjMap::iterator itr = prjs.begin(); itr != prjs.end(); itr++)
                       {
-                        Proj &prj = itr->second;  
-                        if (tri == f0.ipts[i0])
-                          substPointRef(frames[prj.ndi].ipts, tri, f1.ipts[i1]);
-                        else
-                          substPointRef(frames[prj.ndi].ipts, tri, f0.ipts[i0]);
+                          Proj &prj = itr->second;  
+                          if (tri == f0.ipts[i0])
+                              substPointRef(frames[prj.ndi].ipts, tri, f1.ipts[i1]);
+                          else
+                              substPointRef(frames[prj.ndi].ipts, tri, f0.ipts[i0]);
                       }
                   }
               }
           }
 
-        else if (f1.ipts[i1] < 0)                 // add to previous point track
+          else if (f1.ipts[i1] < 0)                 // add to previous point track
           {
-            pti = f0.ipts[i0];
-            f1.ipts[i1] = pti;
-          
-            // projected point, ul,vl,ur
-            Vector3d ipt = getProjection(f1, i1);
-            sba.addProj(ndi1, pti, ipt, stereo);
+              pti = f0.ipts[i0];
+              f1.ipts[i1] = pti;
+
+              // projected point, ul,vl,ur
+              Vector3d ipt = getProjection(f1, i1);
+              sba.addProj(ndi1, pti, ipt, stereo);
           }
-        else if (f0.ipts[i0] < 0)                 // add to previous point track
+          else if (f0.ipts[i0] < 0)                 // add to previous point track
           {
-            pti = f1.ipts[i1];
-            f0.ipts[i0] = pti;
-          
-            // projected point, ul,vl,ur
-            Vector3d ipt = getProjection(f0, i0);
-            sba.addProj(ndi0, pti, ipt, stereo);
+              pti = f1.ipts[i1];
+              f0.ipts[i0] = pti;
+
+              // projected point, ul,vl,ur
+              Vector3d ipt = getProjection(f0, i0);
+              sba.addProj(ndi0, pti, ipt, stereo);
           }
       }
   }

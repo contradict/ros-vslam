@@ -307,70 +307,68 @@ namespace sba
   bool CSparse::doChol()
   {
 #ifdef SBA_CHOLMOD
-    if (useCholmod)
+      if (useCholmod)
       {
-        cholmod_dense *x, b, *R, *R2;
-        cholmod_factor *L ;
-        double *Xx, *Rx, *bb;
-        double one [2], minusone [2];
-        one [0] = 1 ;
-        one [1] = 0 ;
-        minusone [0] = -1 ;
-        minusone [1] = 0 ;
+          cholmod_dense *x, b, *R, *R2;
+          cholmod_factor *L ;
+          double *Xx, *Rx, *bb;
+          double one [2], minusone [2];
+          one [0] = 1 ;
+          one [1] = 0 ;
+          minusone [0] = -1 ;
+          minusone [1] = 0 ;
 
-        //        cholmod_start (&Common) ;    // start it up ???
-        cholmod_print_sparse (chA, (char *)"A", &Common) ; // print simple stats
-        b.nrow = csize;
-        b.ncol = 1;
-        b.d = csize;                // leading dimension (???)
-        b.nzmax = csize;
-        b.xtype = CHOLMOD_REAL;
-        b.dtype = CHOLMOD_DOUBLE;
-        b.x = B.data();
-        //cout << "CHOLMOD analyze..." << flush;
-        L = cholmod_analyze (chA, &Common) ; // analyze 
-        //cout << "factorize..." << flush;
-        cholmod_factorize (chA, L, &Common) ; // factorize 
-        //cout << "solve..." << flush;
-        x = cholmod_solve (CHOLMOD_A, L, &b, &Common) ; // solve Ax=b
-        //        cholmod_print_factor (L, (char *)"L", &Common) ;
+          cholmod_print_sparse (chA, (char *)"A", &Common) ; // print simple stats
+          b.nrow = csize;
+          b.ncol = 1;
+          b.d = csize;                // leading dimension (???)
+          b.nzmax = csize;
+          b.xtype = CHOLMOD_REAL;
+          b.dtype = CHOLMOD_DOUBLE;
+          b.x = B.data();
+          //cout << "CHOLMOD analyze..." << flush;
+          L = cholmod_analyze (chA, &Common) ; // analyze 
+          //cout << "factorize..." << flush;
+          cholmod_factorize (chA, L, &Common) ; // factorize 
+          //cout << "solve..." << flush;
+          x = cholmod_solve (CHOLMOD_A, L, &b, &Common) ; // solve Ax=b
+          //        cholmod_print_factor (L, (char *)"L", &Common) ;
 
-        //cout << "refine" << endl;
-        // one step of iterative refinement, cheap
-	/* Ax=b was factorized and solved, R = B-A*X */
-	R = cholmod_copy_dense (&b, &Common) ;
-	cholmod_sdmult(chA, 0, minusone, one, x, R, &Common) ;
-	/* R2 = A\(B-A*X) */
-	R2 = cholmod_solve (CHOLMOD_A, L, R, &Common) ;
-	/* compute X = X + A\(B-A*X) */
-	Xx = (double *)x->x ;
-	Rx = (double *)R2->x ;
-	for (int i=0 ; i<csize ; i++)
-	{
-          Xx[i] = Xx[i] + Rx[i] ;
-	}
-	cholmod_free_dense (&R2, &Common) ;
-	cholmod_free_dense (&R, &Common) ;
+          //cout << "refine" << endl;
+          // one step of iterative refinement, cheap
+          /* Ax=b was factorized and solved, R = B-A*X */
+          R = cholmod_copy_dense (&b, &Common) ;
+          cholmod_sdmult(chA, 0, minusone, one, x, R, &Common) ;
+          /* R2 = A\(B-A*X) */
+          R2 = cholmod_solve (CHOLMOD_A, L, R, &Common) ;
+          /* compute X = X + A\(B-A*X) */
+          Xx = (double *)x->x ;
+          Rx = (double *)R2->x ;
+          for (int i=0 ; i<csize ; i++)
+          {
+              Xx[i] = Xx[i] + Rx[i] ;
+          }
+          cholmod_free_dense (&R2, &Common) ;
+          cholmod_free_dense (&R, &Common) ;
 
-        bb = B.data();
-        for (int i=0; i<csize; i++) // transfer answer
-          *bb++ = *Xx++;
-        cholmod_free_factor (&L, &Common) ; // free matrices 
-        cholmod_free_dense (&x, &Common) ;
-        cholmod_free_sparse(&chA, &Common);
-        cholmod_finish (&Common) ;   // finish it ???
+          bb = B.data();
+          for (int i=0; i<csize; i++) // transfer answer
+              *bb++ = *Xx++;
+          cholmod_free_factor (&L, &Common) ; // free matrices 
+          cholmod_free_dense (&x, &Common) ;
+          cholmod_free_sparse(&chA, &Common);
 
-        return true;
+          return true;
       }
-    else
+      else
 #endif
       {
-        // using order 0 here (natural order); 
-        // may be better to use "1" for large problems
-        int order = 0;
-        if (csize > 400) order = 1;
-        bool ok = (bool)cs_cholsol(order,A,B.data()); // do the CSparse thang
-        return ok;
+          // using order 0 here (natural order); 
+          // may be better to use "1" for large problems
+          int order = 0;
+          if (csize > 400) order = 1;
+          bool ok = (bool)cs_cholsol(order,A,B.data()); // do the CSparse thang
+          return ok;
       }
   }
 
