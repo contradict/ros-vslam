@@ -134,7 +134,6 @@ namespace sba
 
 #ifdef SBA_CHOLMOD
     // CHOLMOD structures
-    bool chInited;
     cholmod_sparse *chA;        // linear problem matrix
     cholmod_common *chc;
     cholmod_common Common;
@@ -203,7 +202,6 @@ namespace sba
 
 #ifdef SBA_CHOLMOD
     // CHOLMOD structures
-    bool chInited;
     cholmod_sparse *chA;        // linear problem matrix
     cholmod_common *chc;
     cholmod_common Common;

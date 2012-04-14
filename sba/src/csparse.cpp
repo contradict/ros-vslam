@@ -76,7 +76,6 @@ namespace sba
     A = NULL;
 #ifdef SBA_CHOLMOD
     chA = NULL;
-    chInited = false;
 #endif
     useCholmod = false;
     asize = 0;
@@ -403,7 +402,6 @@ namespace sba
     AF = NULL;
 #ifdef SBA_CHOLMOD
     chA = NULL;
-    chInited = false;
     Common.print=0;
 #endif
     asize = 0;
