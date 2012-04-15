@@ -62,7 +62,7 @@ public:
   StereoVslamNode(const std::string& vocab_tree_file, const std::string& vocab_weights_file,
                   const std::string& calonder_trees_file)
     : it_(nh_), sync_(3),
-      vslam_system_(vocab_tree_file, vocab_weights_file),
+      vslam_system_(vocab_tree_file, vocab_weights_file, 20),
       detector_(new vslam_system::AnyDetector)
   {
     // Use calonder descriptor
@@ -99,6 +99,7 @@ public:
     vslam_system_.setPRPolish(config.pr_polish);
     vslam_system_.setVORansacIt(config.vo_ransac_iterations);
     vslam_system_.setVOPolish(config.vo_polish);
+    vslam_system_.setKeyInliers(config.min_inliers);
   }
 
 

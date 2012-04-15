@@ -45,7 +45,7 @@ def add_params(gen):
     
     gen.add("min_keyframe_dist", double_t, 0, "Minimum keyframe distance (meters)", 0.2, 0, 50.0)
     gen.add("min_keyframe_angle", double_t, 0, "Minimum keyframe angular distance (radians)", 0.1, 0, 3.14)
-    gen.add("min_inliers", int_t, 0, "Minimum keyframe inliers", 0, 0, 1000)
+    gen.add("min_inliers", int_t, 0, "Minimum keyframe inliers", 20, 0, 1000)
     
     # Place recognition settings
     
