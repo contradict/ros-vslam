@@ -44,18 +44,21 @@ using namespace std;
 
 namespace frame_common {
 
-  static void drawSmallKeypoints(const cv::Mat& image, const std::vector<cv::KeyPoint>& keypoints,
+  static int drawSmallKeypoints(const cv::Mat& image, const std::vector<cv::KeyPoint>& keypoints,
                                  cv::Mat& display, cv::Scalar color)
   {
     int shift_bits = 4;
     int multiplier = 1 << shift_bits;
+    int k=0;
     for (std::vector<cv::KeyPoint>::const_iterator i = keypoints.begin(), ie = keypoints.end();
          i != ie; ++i) {
       cv::Point center(i->pt.x * multiplier, i->pt.y * multiplier);
       int radius = 1*multiplier;
       cv::circle(display, center, radius, color, 1, CV_AA, shift_bits);
+      k++;
       /// @todo Draw orientation
     }
+    return k;
   }
 
   void drawVOtracks(const cv::Mat &image,
@@ -72,10 +75,12 @@ namespace frame_common {
 
     // Draw keypoints
     cv::cvtColor(image, display, CV_GRAY2BGR);
-    drawSmallKeypoints(image, f0.kpts, display, CV_RGB(255, 0, 0));
-    drawSmallKeypoints(image, f0.tkpts, display, CV_RGB(0, 255, 0));
-
-    return;
+    std::cout << "drew " <<
+        drawSmallKeypoints(image, f0.kpts, display, CV_RGB(255, 0, 0)) <<
+        " kpts" << std::endl;
+    std::cout << "drew " <<
+        drawSmallKeypoints(image, f0.tkpts, display, CV_RGB(0, 255, 0)) <<
+        " tkpts" << std::endl;
 
     if (frames.size() < 2) return;
 
