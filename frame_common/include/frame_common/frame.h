@@ -178,7 +178,7 @@ namespace frame_common
     /// \param nfrac Fractional disparity. If above 0, then imgr is a 16-bit fractional disparity
     ///              image instead, with <nfrac> counts per pixel disparity
     /// \param setPointCloud.  True if point cloud is to be set up from disparities
-    void setStereoFrame(Frame &frame, const cv::Mat &img, const cv::Mat &imgr, int nfrac = 0, 
+    virtual void setStereoFrame(Frame &frame, const cv::Mat &img, const cv::Mat &imgr, int nfrac = 0, 
                         bool setPointCloud=false);
 
     /// \brief Set up stereo frame, assumes frame has camera parameters already set.

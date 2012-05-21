@@ -50,7 +50,7 @@ private:
   image_geometry::StereoCameraModel cam_model_;
   cv::Ptr<cv::FeatureDetector> detector_;
 
-  frame_common::FrameProc frame_processor_;
+  frame_common::FrameProcGpu frame_processor_;
   /// stereo image key frames in system
   std::vector<frame_common::Frame, Eigen::aligned_allocator<frame_common::Frame> > frames_;
   vslam::voSt vo_; /// VO processor
@@ -80,8 +80,8 @@ public:
           numframes(0), numpoints(0), numcameras(0), init(true)
   {
     // Use calonder descriptor
-    typedef cv::CalonderDescriptorExtractor<float> Calonder;
-    frame_processor_.setFrameDescriptor(new Calonder(calonder_trees_file));
+    //typedef cv::CalonderDescriptorExtractor<float> Calonder;
+    //frame_processor_.setFrameDescriptor(new Calonder(calonder_trees_file));
     
     // Synchronize inputs
     l_image_sub_.subscribe(it_, "left/image_rect", 1);
@@ -145,8 +145,8 @@ public:
   
   void configCb(vslam_system::StereoVslamNodeConfig& config, uint32_t level)
   {
-    dynamic_cast<vslam_system::AnyDetector*>((cv::FeatureDetector*)detector_)->update(config);
-    frame_processor_.detector = detector_;
+    //dynamic_cast<vslam_system::AnyDetector*>((cv::FeatureDetector*)detector_)->update(config);
+    //frame_processor_.detector = detector_;
 
     /*vslam_system_.setPRRansacIt(config.pr_ransac_iterations);
     vslam_system_.setPRPolish(config.pr_polish);
