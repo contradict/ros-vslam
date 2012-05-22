@@ -13,6 +13,8 @@
 #include <vslam_system/any_detector.h>
 #include <vslam_system/StereoVslamNodeConfig.h>
 
+#include <frame_common/frame_proc_gpu.h>
+
 // Messages
 #include <sba/Frame.h>
 #include <geometry_msgs/PointStamped.h>
@@ -80,8 +82,8 @@ public:
           numframes(0), numpoints(0), numcameras(0), init(true)
   {
     // Use calonder descriptor
-    //typedef cv::CalonderDescriptorExtractor<float> Calonder;
-    //frame_processor_.setFrameDescriptor(new Calonder(calonder_trees_file));
+    typedef cv::CalonderDescriptorExtractor<float> Calonder;
+    frame_processor_.setFrameDescriptor(new Calonder(calonder_trees_file));
     
     // Synchronize inputs
     l_image_sub_.subscribe(it_, "left/image_rect", 1);
@@ -145,8 +147,8 @@ public:
   
   void configCb(vslam_system::StereoVslamNodeConfig& config, uint32_t level)
   {
-    //dynamic_cast<vslam_system::AnyDetector*>((cv::FeatureDetector*)detector_)->update(config);
-    //frame_processor_.detector = detector_;
+    dynamic_cast<vslam_system::AnyDetector*>((cv::FeatureDetector*)detector_)->update(config);
+    frame_processor_.detector = detector_;
 
     /*vslam_system_.setPRRansacIt(config.pr_ransac_iterations);
     vslam_system_.setPRPolish(config.pr_polish);

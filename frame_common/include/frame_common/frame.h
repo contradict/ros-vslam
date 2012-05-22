@@ -189,7 +189,7 @@ namespace frame_common
     ///              image instead.
     /// \param mask  ROI for left image
     /// \param setPointCloud.  True if point cloud is to be set up from disparities
-    void setStereoFrame(Frame &frame, const cv::Mat &img, const cv::Mat &imgr, const cv::Mat &left_mask, int nfrac = 0,
+    virtual void setStereoFrame(Frame &frame, const cv::Mat &img, const cv::Mat &imgr, const cv::Mat &left_mask, int nfrac = 0,
                         bool setPointCloud=false);
 
   };
