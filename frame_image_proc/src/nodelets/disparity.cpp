@@ -16,6 +16,8 @@
 #include <frame_image_proc/DisparityConfig.h>
 #include <dynamic_reconfigure/server.h>
 
+#include <frame_image_proc/matcher.h>
+
 namespace frame_image_proc {
 
 using namespace sensor_msgs;
@@ -48,7 +50,7 @@ class DisparityNodelet : public nodelet::Nodelet
   
   // Processing state (note: only safe because we're single-threaded!)
   image_geometry::StereoCameraModel model_;
-  cv::StereoBM block_matcher_; // contains scratch buffers for block matching
+  StereoMatcher block_matcher_; // contains scratch buffers for block matching
 
   virtual void onInit();
 
@@ -153,21 +155,15 @@ void DisparityNodelet::imageCb(const ImageConstPtr& l_image_msg,
   disp_msg->T = model_.baseline();
 
   // Compute window of (potentially) valid disparities
-  cv::Ptr<CvStereoBMState> params = block_matcher_.state;
-  int border   = params->SADWindowSize / 2;
-  int left   = params->numberOfDisparities + params->minDisparity + border - 1;
-  int wtf = (params->minDisparity >= 0) ? border + params->minDisparity : std::max(border, -params->minDisparity);
-  int right  = disp_msg->image.width - 1 - wtf;
-  int top    = border;
-  int bottom = disp_msg->image.height - 1 - border;
+  int left, top, right, bottom;
+  block_matcher_.determineValidWindow(disp_msg->image.width, disp_msg->image.height, left, top, right, bottom);
   disp_msg->valid_window.x_offset = left;
   disp_msg->valid_window.y_offset = top;
   disp_msg->valid_window.width    = right - left;
   disp_msg->valid_window.height   = bottom - top;
-
   // Disparity search range
-  disp_msg->min_disparity = params->minDisparity;
-  disp_msg->max_disparity = params->minDisparity + params->numberOfDisparities - 1;
+  disp_msg->min_disparity = block_matcher_.getMinDisparity();
+  disp_msg->max_disparity = block_matcher_.getMinDisparity() + block_matcher_.getDisparityRange();
   disp_msg->delta_d = 1.0 / 16; // OpenCV uses 16 disparities per pixel
 
   // Create cv::Mat views onto all buffers
@@ -202,15 +198,16 @@ void DisparityNodelet::configCb(Config &config, uint32_t level)
 
   // Note: With single-threaded NodeHandle, configCb and imageCb can't be called
   // concurrently, so this is thread-safe.
-  block_matcher_.state->preFilterSize       = config.prefilter_size;
-  block_matcher_.state->preFilterCap        = config.prefilter_cap;
-  block_matcher_.state->SADWindowSize       = config.correlation_window_size;
-  block_matcher_.state->minDisparity        = config.min_disparity;
-  block_matcher_.state->numberOfDisparities = config.disparity_range;
-  block_matcher_.state->uniquenessRatio     = config.uniqueness_ratio;
-  block_matcher_.state->textureThreshold    = config.texture_threshold;
-  block_matcher_.state->speckleWindowSize   = config.speckle_size;
-  block_matcher_.state->speckleRange        = config.speckle_range;
+  block_matcher_.setPreFilterSize(        config.prefilter_size);
+  block_matcher_.setPreFilterCap(         config.prefilter_cap);
+  block_matcher_.setCorrelationWindowSize(config.correlation_window_size);
+  block_matcher_.setMinDisparity(         config.min_disparity);
+  block_matcher_.setDisparityRange(       config.disparity_range);
+  block_matcher_.setUniquenessRatio(      config.uniqueness_ratio);
+  block_matcher_.setTextureThreshold(     config.texture_threshold);
+  block_matcher_.setSpeckleSize(          config.speckle_size);
+  block_matcher_.setSpeckleRange(         config.speckle_range);
+  block_matcher_.use_gpu = config.use_gpu;
 }
 
 } // namespace frame_image_proc
