@@ -10,6 +10,8 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 rosbuild_add_boost_directories()
 
+find_package(OpenCV 2.4.0 REQUIRED)
+
 # Dynamic reconfigure support
 rosbuild_find_ros_package(dynamic_reconfigure)
 include(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
@@ -21,5 +23,5 @@ rosbuild_add_library(frame_image_proc src/libframe_image_proc/processor.cpp
 
 # Standalone node
 rosbuild_add_executable(frameimageproc_exe src/nodes/frame_image_proc.cpp)
-target_link_libraries(frameimageproc_exe frame_image_proc)
+target_link_libraries(frameimageproc_exe frame_image_proc ${OpenCV_LIBRARIES})
 SET_TARGET_PROPERTIES(frameimageproc_exe PROPERTIES OUTPUT_NAME frame_image_proc)
