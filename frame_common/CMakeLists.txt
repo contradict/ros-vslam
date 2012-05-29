@@ -3,11 +3,14 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 set(ROS_BUILT_TYPE RelWithDebInfo)
 rosbuild_init()
 
+rosbuild_genmsg()
+
 rosbuild_add_boost_directories()
 
 rosbuild_check_for_sse()
 
 add_definitions(-Wall -Wno-missing-field-initializers -fopenmp)
+
 
 #####################################################################
 # library
