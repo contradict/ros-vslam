@@ -163,7 +163,7 @@ namespace frame_common
     // detector = new cv::FastFeatureDetector(v);
 
     // descriptor (by default, SURF)
-    extractor = new cv::SurfDescriptorExtractor;
+    extractor = cv::DescriptorExtractor::create("SURF");
 
     // stereo
     ndisp = 64;
