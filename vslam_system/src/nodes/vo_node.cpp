@@ -37,6 +37,7 @@ private:
   message_filters::Subscriber<sensor_msgs::CameraInfo> l_info_sub_, r_info_sub_;
   message_filters::TimeSynchronizer<sensor_msgs::Image, sensor_msgs::CameraInfo,
                                     sensor_msgs::Image, sensor_msgs::CameraInfo> sync_;
+  ros::Subscriber frame_sub_;
                                     
   // Publications for SBA Node
   ros::Publisher sba_frames_pub_;
@@ -91,6 +92,8 @@ public:
     vo_tracks_pub_ = it_.advertiseCamera("/vo/vo_tracks/image", 1);
     sync_.connectInput(l_image_sub_, l_info_sub_, r_image_sub_, r_info_sub_);
     sync_.registerCallback( boost::bind(&VONode::imageCb, this, _1, _2, _3, _4) );
+
+    nh_.subscribe("frame", 1, &VONode::frameCallback, this);
     
     // Advertise topics for connection to SBA node
     // sba_nodes_pub_ = nh_.advertise<sba::CameraNode>("sba_nodes", 5000);
@@ -132,6 +135,53 @@ public:
 
     if (addFrame(cam_params, left, right))
     {
+      if (vo_tracks_pub_.getNumSubscribers() > 0) 
+      {
+        frame_common::drawVOtracks(left, vo_.frames, vo_display_);
+        IplImage ipl = vo_display_;
+        sensor_msgs::ImagePtr msg = sensor_msgs::CvBridge::cvToImgMsg(&ipl);
+        msg->header = l_cam_info->header;
+        vo_tracks_pub_.publish(msg, l_cam_info);
+      }
+    }
+  }
+
+  void frameCallback(const frame_common::FrameConstPtr& frame_msg)
+  {
+    cam_model_.fromCameraInfo(frame_msg.l_info, frame_msg.r_info);
+
+    frame_common::CamParams cam_params;
+    cam_params.fx = cam_model_.left().fx();
+    cam_params.fy = cam_model_.left().fy();
+    cam_params.cx = cam_model_.left().cx();
+    cam_params.cy = cam_model_.left().cy();
+    cam_params.tx = cam_model_.baseline();
+
+    // Set up next frame and compute descriptors
+    frame_common::Frame next_frame;
+    next_frame.setCamParams(camera_parameters); // this sets the projection and reprojection matrices
+
+    int nkpts = frame_msg.keypoints.size();
+    for(i=0;i<nkpts;i++) {
+        float disp = frame_msg.keypoints[i].d
+        frame.disps.push_back(disp);
+        frame.goodPts.push_back(frame_msg.keypoints[i].goodPt);
+        Vector3d pt(frame_msg.keypoints[i].x,frame_msg.keypoints[i].y,disp);
+        frame.pts[i].head(3) = frame.pix2cam(pt);
+        frame.pts[i](3) = 1.0;
+    }
+    frame.dtors=cv::Mat
+
+    next_frame.frameId = numframes++; // index
+
+    // Add frame to visual odometer
+    bool is_keyframe = vo_.addFrame(next_frame);
+
+    // grow full SBA
+    if (is_keyframe)
+    {
+      frames_.push_back(next_frame);
+      publishLatestFrame();
       if (vo_tracks_pub_.getNumSubscribers() > 0) 
       {
         frame_common::drawVOtracks(left, vo_.frames, vo_display_);

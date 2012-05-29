@@ -18,6 +18,7 @@
   <depend package="roscpp"/>
   <depend package="sensor_msgs"/>
   <depend package="stereo_msgs"/>
+  <depend package="frame_common"/>
   <rosdep name="opencv2"/>
 
   <platform os="ubuntu" version="9.04"/>

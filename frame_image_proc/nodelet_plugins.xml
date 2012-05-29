@@ -1,5 +1,9 @@
 <library path="lib/libframe_image_proc">
 
+  <class name="frame_image_proc/frame_disparity" type="frame_image_proc::FrameDisparityNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to perform stereo processing on a pair of rectified image streams, producing disparity images</description>
+  </class>
+
   <class name="frame_image_proc/disparity" type="frame_image_proc::DisparityNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to perform stereo processing on a pair of rectified image streams, producing disparity images</description>
   </class>

@@ -18,8 +18,12 @@ include(${dynamic_reconfigure_PACKAGE_PATH}/cmake/cfgbuild.cmake)
 gencfg()
 
 # Nodelet library
-rosbuild_add_library(frame_image_proc src/libframe_image_proc/processor.cpp
-    src/libframe_image_proc/matcher.cpp src/nodelets/disparity.cpp src/nodelets/point_cloud2.cpp src/nodelets/point_cloud.cpp)
+rosbuild_add_library(frame_image_proc
+    src/libframe_image_proc/processor.cpp src/libframe_image_proc/matcher.cpp
+    src/nodelets/disparity.cpp
+    src/nodelets/frame_disparity.cpp
+    src/nodelets/point_cloud2.cpp
+    src/nodelets/point_cloud.cpp)
 
 # Standalone node
 rosbuild_add_executable(frameimageproc_exe src/nodes/frame_image_proc.cpp)
