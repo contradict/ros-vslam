@@ -49,7 +49,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/filter.h>
 #include <pcl/filters/extract_indices.h>
-#include <pcl/common/transform.h>
+#include <pcl/common/transforms.h>
 #include <pcl/registration/transforms.h>
 #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
@@ -75,7 +75,7 @@ namespace frame_common
         estimateNormals (const pcl::PointCloud<PointT> &input, const pcl::PointIndices &indices, pcl::PointCloud<PointNT> &output)
       {
         // Create an object for spatial search (e.g., nearest neighbor estimation)
-        pcl::OrganizedDataIndex<PointT> tree;
+        pcl::search::OrganizedNeighbor<PointT> tree;
 
         // Create a normal estimation object
         pcl::NormalEstimation<PointT, PointNT> ne;
@@ -207,7 +207,7 @@ namespace frame_common
         // Compute normals
         NormalEstimation<PointXYZRGB, Normal> normalest;
         normalest.setViewPoint(0, 0, 0);
-        normalest.setSearchMethod (boost::make_shared<KdTreeFLANN<PointXYZRGB> > ());
+        normalest.setSearchMethod (pcl::search::KdTree<PointXYZRGB>::Ptr (new pcl::search::KdTree<PointXYZRGB>));
         //normalest.setKSearch (10);
         normalest.setRadiusSearch (0.25);
         normalest.setInputCloud(boost::make_shared<const PointCloud<PointXYZRGB> >(cloud_voxel_reduced));

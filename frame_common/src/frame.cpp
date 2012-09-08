@@ -469,7 +469,7 @@ namespace frame_common
       // Compute normals
       NormalEstimation<PointXYZRGB, Normal> normalest;
       normalest.setViewPoint(0, 0, 0);
-      normalest.setSearchMethod (boost::make_shared<KdTreeFLANN<PointXYZRGB> > ());
+      normalest.setSearchMethod (pcl::search::KdTree<PointXYZRGB>::Ptr (new pcl::search::KdTree<PointXYZRGB>));
       //normalest.setKSearch (10);
       normalest.setRadiusSearch (0.25);
       //      normalest.setRadiusSearch (0.4);
