@@ -7,7 +7,7 @@
   <review status="unreviewed" notes=""/>
 
   <depend package="opencv2"/>
-  <depend package="eigen"/>
+  <rosdep name="eigen"/>
   <depend package="frame_common"/>
   <depend package="sba"/>
 

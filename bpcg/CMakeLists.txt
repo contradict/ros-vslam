@@ -3,6 +3,9 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 set(ROS_BUILT_TYPE RelWithDebInfo)
 rosbuild_init()
 
+find_package(Eigen REQUIRED)
+include_directories(${Eigen_INCLUDE_DIRS})
+
 rosbuild_add_boost_directories()
 
 #rosbuild_check_for_sse()

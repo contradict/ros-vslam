@@ -5,7 +5,7 @@
   <author>Kurt Konolige</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <depend package="eigen"/>
+  <rosdep name="eigen"/>
   <export>
     <cpp cflags="-I${prefix}/include -I${prefix}/msg/cpp" />
   </export>

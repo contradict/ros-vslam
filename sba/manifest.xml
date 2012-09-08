@@ -7,7 +7,7 @@
   <review status="unreviewed" notes=""/>
   
   <depend package="roscpp"/>
-  <depend package="eigen"/>
+  <rosdep name="eigen"/>
   <depend package="bpcg"/>
   <depend package="std_msgs"/>
   <depend package="visualization_msgs"/>
