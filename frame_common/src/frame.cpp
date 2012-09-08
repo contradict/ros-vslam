@@ -34,6 +34,7 @@
 
 
 #include <frame_common/frame.h>
+#include <opencv2/nonfree/nonfree.hpp>
 
 using namespace Eigen;
 using namespace std;

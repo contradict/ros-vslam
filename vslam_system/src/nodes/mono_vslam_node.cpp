@@ -7,6 +7,7 @@
 
 #include <cv_bridge/CvBridge.h>
 #include <image_geometry/pinhole_camera_model.h>
+#include <opencv2/legacy/legacy.hpp>
 
 #include <vslam_system/vslam_mono.h>
 #include <sba/visualization.h>

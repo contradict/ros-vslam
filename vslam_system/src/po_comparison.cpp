@@ -23,7 +23,8 @@
 
 #include <opencv/highgui.h>
 #include <posest/pe3d.h>
-#include "opencv2/contrib/contrib.hpp"
+#include <opencv2/contrib/contrib.hpp>
+#include <opencv2/legacy/legacy.hpp>
 
 using namespace std;
 using namespace sba;

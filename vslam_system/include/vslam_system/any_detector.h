@@ -2,6 +2,7 @@
 #define VSLAM_SYSTEM_ANY_DETECTOR_H
 
 #include <opencv2/features2d/features2d.hpp>
+#include <opencv2/nonfree/nonfree.hpp>
 
 namespace vslam_system {
 

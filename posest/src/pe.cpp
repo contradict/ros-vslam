@@ -59,7 +59,7 @@ namespace pe
     trans.setZero();
     
     // matcher
-    matcher = new cv::BruteForceMatcher< cv::L2<float> >;
+    matcher = new cv::BFMatcher( cv::NORM_L2 );
     wx = 92; wy = 48;
     windowed = true;
   }

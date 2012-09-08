@@ -54,6 +54,8 @@
 #include <fnmatch.h>
 #include <time.h>
 #include <opencv/highgui.h>
+#include <opencv2/nonfree/nonfree.hpp>
+#include <opencv2/legacy/legacy.hpp>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <sensor_msgs/CameraInfo.h>

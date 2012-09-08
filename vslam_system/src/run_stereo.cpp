@@ -55,6 +55,7 @@
 #include <fnmatch.h>
 
 #include <opencv/highgui.h>
+#include <opencv2/legacy/legacy.hpp>
 
 using namespace std;
 using namespace sba;

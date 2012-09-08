@@ -8,6 +8,7 @@
 
 #include <cv_bridge/CvBridge.h>
 #include <image_geometry/stereo_camera_model.h>
+#include <opencv2/legacy/legacy.hpp>
 
 #include <vslam_system/vslam.h>
 #include <sba/visualization.h>

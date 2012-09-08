@@ -21,6 +21,8 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
+#include <opencv2/legacy/legacy.hpp>
+
 void publishRegisteredPointclouds(sba::SysSBA& sba, 
     std::vector<frame_common::Frame, Eigen::aligned_allocator<frame_common::Frame> >& frames, 
     ros::Publisher& pub);
