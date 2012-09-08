@@ -73,19 +73,23 @@ target_link_libraries(run_mono vo)
 # stereo VSLAM as a ROS node
 rosbuild_add_executable(stereo_vslam_node src/nodes/stereo_vslam_node.cpp)
 target_link_libraries(stereo_vslam_node vo)
+rosbuild_link_boost(stereo_vslam_node signals)
 
 # monocular VSLAM as a ROS node
 rosbuild_add_executable(mono_vslam_node src/nodes/mono_vslam_node.cpp)
 target_link_libraries(mono_vslam_node vo)
+rosbuild_link_boost(mono_vslam_node signals)
 
 
 # stereo & ptcloud VSLAM as a ROS node
 rosbuild_add_executable(ptcloud_vslam_node src/nodes/ptcloud_vslam_node.cpp)
 target_link_libraries(ptcloud_vslam_node vo)
+rosbuild_link_boost(ptcloud_vslam_node signals)
 
 # stereo VO as a ROS node
 rosbuild_add_executable(vo_node src/nodes/vo_node.cpp)
 target_link_libraries(vo_node vo)
+rosbuild_link_boost(vo_node signals)
 
 # publish NewCollege (or other) static dataset over ROS
 rosbuild_add_executable(fake_stereo_cam src/nodes/fake_stereo_cam.cpp)
